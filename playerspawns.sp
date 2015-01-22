@@ -1,5 +1,5 @@
 /**
- * Custom Spawn V1.0
+ * Custom Spawn V1.1.0
  * By David Y.
  * 2015-01-21
  *
@@ -21,6 +21,7 @@
 #include <sdktools>
 
 new Handle:sm_players_spawn_admin_only = INVALID_HANDLE;
+new Handle:sm_player_spawns = INVALID_HANDLE;
 
 static Float:SpawnPoint[MAXPLAYERS][3];
 static bool:SpawnSet[MAXPLAYERS];
@@ -30,13 +31,14 @@ public Plugin:myinfo = {
 	name = "Player Spawns",
 	author = "David Y.",
 	description = "Players set a custom spawnpoint for themselves.",
-	version = "1.0.0",
+	version = "1.1.0",
 	url = "http://www.davidvyee.com/"
 }
 
 public OnPluginStart() {
-	CreateConVar("sm_player_spawns_version", "1.0.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
-	sm_players_spawn_admin_only = CreateConVar("sm_players_spawn_admin_only", "0", "Toggles Admin Only spawn saving.", FCVAR_PLUGIN);
+	CreateConVar("sm_player_spawns_version", "1.1.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	sm_player_spawns = CreateConVar("sm_player_spawns", "1", "Respawn players to their custom locations on death; 0 - disabled, 1 - enabled");
+	sm_players_spawn_admin_only = CreateConVar("sm_players_spawn_admin_only", "0", "Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_setspawn", SetSpawn);
 	RegConsoleCmd("sm_clearspawn", ClearSpawn);
 
@@ -52,6 +54,12 @@ public OnClientPutInServer(Client) {
 }
 
 public Action:SetSpawn(Client, Args) {
+	new playerSpawnsState = GetConVarInt(sm_player_spawns);
+	if(playerSpawnsState == 0) {
+		PrintToChat(Client, "[SM] You cannot set your spawn location because player spawns has been disabled.");
+		return Plugin_Handled;
+	}
+
 	if(SpawnSetDisabled == true) {
 		PrintToChat(Client, "[SM] You cannot set your spawn right now.");
 		return Plugin_Handled;
@@ -89,6 +97,12 @@ public Action:SetSpawn(Client, Args) {
 }
 
 public Action:ClearSpawn(Client, Args) {
+	new playerSpawnsState = GetConVarInt(sm_player_spawns);
+	if(playerSpawnsState == 0) {
+		PrintToChat(Client, "[SM] You cannot clear your spawn location because player spawns has been disabled.");
+		return Plugin_Handled;
+	}
+
 	if(Args == 0) {
 		if(Client == 0) {
 			return Plugin_Handled;
@@ -202,17 +216,20 @@ public Action:ClearSpawn(Client, Args) {
 
 public PlayerSpawn(Handle:Event, const String:Name[], bool:Broadcast)
 {
-	decl Client;
-	Client = GetClientOfUserId(GetEventInt(Event, "userid"));
+	new playerSpawnsState = GetConVarInt(sm_player_spawns);
+	if(playerSpawnsState > 0) {
+		decl Client;
+		Client = GetClientOfUserId(GetEventInt(Event, "userid"));
 
-	new AdminId:id = GetUserAdmin(Client);
+		new AdminId:id = GetUserAdmin(Client);
 
-	if(GetConVarBool(sm_players_spawn_admin_only) && id == INVALID_ADMIN_ID) {
-		return;
-	}
+		if(GetConVarBool(sm_players_spawn_admin_only) && id == INVALID_ADMIN_ID) {
+			return;
+		}
 
-	if(SpawnSet[Client]) {
-		TeleportEntity(Client, SpawnPoint[Client], NULL_VECTOR, NULL_VECTOR);
+		if(SpawnSet[Client]) {
+			TeleportEntity(Client, SpawnPoint[Client], NULL_VECTOR, NULL_VECTOR);
+		}
 	}
 }
 
