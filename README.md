@@ -22,12 +22,12 @@ https://forums.alliedmods.net/showthread.php?p=877834
 <h2>Cvars:</h2>
 `sm_player_spawns_version = 1.0.0` (cannot be changed)
 
-`sm_players_spawn_admin_only` - Toggles Admin Only spawn saving
+`sm_players_spawn_admin_only = 1` - Toggles Admin Only spawn saving
 
 <h2>Cmds:</h2>
-- sm_setspawn
-- sm_clearspawn
-- sm_clearspawn <name>
+- `sm_setspawn`
+- `sm_clearspawn`
+- `sm_clearspawn <name>`
 
 <h2>Installation:</h2>
 - playerspawns.smx into /addons/sourcemod/plugins
