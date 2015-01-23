@@ -1,5 +1,5 @@
 /**
- * Custom Spawn V1.1.0
+ * Custom Spawn V1.1.1
  * By David Y.
  * 2015-01-21
  *
@@ -31,12 +31,12 @@ public Plugin:myinfo = {
 	name = "Player Spawns",
 	author = "David Y.",
 	description = "Players set a custom spawnpoint for themselves.",
-	version = "1.1.0",
+	version = "1.1.1",
 	url = "http://www.davidvyee.com/"
 }
 
 public OnPluginStart() {
-	CreateConVar("sm_player_spawns_version", "1.1.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	CreateConVar("sm_player_spawns_version", "1.1.1", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	sm_player_spawns = CreateConVar("sm_player_spawns", "1", "Respawn players to their custom locations on death; 0 - disabled, 1 - enabled");
 	sm_players_spawn_admin_only = CreateConVar("sm_players_spawn_admin_only", "0", "Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_setspawn", SetSpawn);
@@ -239,11 +239,14 @@ public Action:OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast
 
 public Action:OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	SpawnSetDisabled = true;
-	for (new i = 1; i <= MaxClients; i++) {
-		if (IsClientInGame(i)) {
-			SpawnSet[i] = false;
-		}
-	}  
-	PrintToChatAll ("[SM] All player spawn points reset!");
+	new playerSpawnsState = GetConVarInt(sm_player_spawns);
+	if(playerSpawnsState > 0) {
+		SpawnSetDisabled = true;
+		for (new i = 1; i <= MaxClients; i++) {
+			if (IsClientInGame(i)) {
+				SpawnSet[i] = false;
+			}
+		}  
+		PrintToChatAll ("[SM] All player spawn points reset!");
+	}
 }
