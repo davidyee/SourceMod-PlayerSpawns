@@ -1,5 +1,5 @@
 /**
- * Custom Spawn V1.1.1
+ * Custom Spawn V1.2.0
  * By David Y.
  * 2015-01-21
  *
@@ -23,20 +23,21 @@
 new Handle:sm_players_spawn_admin_only = INVALID_HANDLE;
 new Handle:sm_player_spawns = INVALID_HANDLE;
 
-static Float:SpawnPoint[MAXPLAYERS][3];
-static bool:SpawnSet[MAXPLAYERS];
+static Float:SpawnPoint[MAXPLAYERS+1][3];
+static Float:SpawnAngle[MAXPLAYERS+1][3];
+static bool:SpawnSet[MAXPLAYERS+1];
 static bool:SpawnSetDisabled = false;
 
 public Plugin:myinfo = {
 	name = "Player Spawns",
 	author = "David Y.",
 	description = "Players set a custom spawnpoint for themselves.",
-	version = "1.1.1",
+	version = "1.2.0",
 	url = "http://www.davidvyee.com/"
 }
 
 public OnPluginStart() {
-	CreateConVar("sm_player_spawns_version", "1.1.1", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	CreateConVar("sm_player_spawns_version", "1.2.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	sm_player_spawns = CreateConVar("sm_player_spawns", "1", "Respawn players to their custom locations on death; 0 - disabled, 1 - enabled");
 	sm_players_spawn_admin_only = CreateConVar("sm_players_spawn_admin_only", "0", "Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_setspawn", SetSpawn);
@@ -81,14 +82,8 @@ public Action:SetSpawn(Client, Args) {
 		return Plugin_Handled;
 	}
 
-	decl Float:Location[3];
-
-	GetClientAbsOrigin(Client, Location);
-
-	SpawnPoint[Client][0] = Location[0];
-	SpawnPoint[Client][1] = Location[1];
-	SpawnPoint[Client][2] = Location[2];
-
+	GetClientAbsOrigin(Client, SpawnPoint[Client]);
+	GetClientEyeAngles(Client, SpawnAngle[Client]);
 	SpawnSet[Client] = true;
 
 	PrintToChat(Client, "[SM] Spawn location set.");
@@ -228,7 +223,7 @@ public PlayerSpawn(Handle:Event, const String:Name[], bool:Broadcast)
 		}
 
 		if(SpawnSet[Client]) {
-			TeleportEntity(Client, SpawnPoint[Client], NULL_VECTOR, NULL_VECTOR);
+			TeleportEntity(Client, SpawnPoint[Client], SpawnAngle[Client], NULL_VECTOR);
 		}
 	}
 }
@@ -247,6 +242,6 @@ public Action:OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 				SpawnSet[i] = false;
 			}
 		}  
-		PrintToChatAll ("[SM] All player spawn points reset!");
+		//PrintToChatAll ("[SM] All player spawn points reset!");
 	}
 }
