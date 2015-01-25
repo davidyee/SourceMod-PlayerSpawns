@@ -20,12 +20,13 @@ https://forums.alliedmods.net/showthread.php?p=877834
 - Counter Strike: Global Offensive
 
 <h2>Cvars:</h2>
-- `sm_player_spawns_version = 1.2.0` (cannot be changed)
+- `sm_player_spawns_version = 1.3.0` (cannot be changed)
 - `sm_player_spawns = 1` - Respawn players to their custom locations on death; 0 - disabled, 1 - enabled
 - `sm_players_spawn_admin_only = 1` - Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled
 
 <h2>Cmds:</h2>
 - `sm_setspawn`
+- `sm_setspawn <name>`
 - `sm_clearspawn`
 - `sm_clearspawn <name>`
 
@@ -33,6 +34,8 @@ https://forums.alliedmods.net/showthread.php?p=877834
 - playerspawns.smx into /addons/sourcemod/plugins
 
 <h2>Changelog:</h2>
+- 1.3.0 (2015-01-25)
+  - Add admin ability to set the spawn location of other players via `sm_setspawn <name>`
 - 1.2.0 (2015-01-24)
   - Add restoration of player spawn angles when respawning players to their custom spawn location
 - 1.1.1 (2015-01-23)

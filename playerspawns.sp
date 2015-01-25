@@ -1,5 +1,5 @@
 /**
- * Custom Spawn V1.2.0
+ * Custom Spawn V1.3.0
  * By David Y.
  * 2015-01-21
  *
@@ -32,12 +32,12 @@ public Plugin:myinfo = {
 	name = "Player Spawns",
 	author = "David Y.",
 	description = "Players set a custom spawnpoint for themselves.",
-	version = "1.2.0",
+	version = "1.3.0",
 	url = "http://www.davidvyee.com/"
 }
 
 public OnPluginStart() {
-	CreateConVar("sm_player_spawns_version", "1.2.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	CreateConVar("sm_player_spawns_version", "1.3.0", "Player Spawns Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	sm_player_spawns = CreateConVar("sm_player_spawns", "1", "Respawn players to their custom locations on death; 0 - disabled, 1 - enabled");
 	sm_players_spawn_admin_only = CreateConVar("sm_players_spawn_admin_only", "0", "Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_setspawn", SetSpawn);
@@ -54,39 +54,114 @@ public OnClientPutInServer(Client) {
 	SpawnSet[Client] = false;
 }
 
+public bool:IsAdmin(Client) {
+	if(GetUserAdmin(Client) == INVALID_ADMIN_ID) return false;
+	else return true;
+}
+
 public Action:SetSpawn(Client, Args) {
 	new playerSpawnsState = GetConVarInt(sm_player_spawns);
-	if(playerSpawnsState == 0) {
-		PrintToChat(Client, "[SM] You cannot set your spawn location because player spawns has been disabled.");
-		return Plugin_Handled;
+	
+	if(Args == 0) { // setting spawn on self
+		if(playerSpawnsState == 0) {
+			PrintToChat(Client, 
+			"[SM] You cannot set your spawn location because player spawns has been disabled.");
+			return Plugin_Handled;
+		}
+
+		if(SpawnSetDisabled == true) {
+			PrintToChat(Client, "[SM] You cannot set your spawn right now.");
+			return Plugin_Handled;
+		}
+
+		if(Client == 0) { // server cannot execute this command
+			return Plugin_Handled;
+		}
+		
+		new AdminId:id = GetUserAdmin(Client);
+
+		if(GetConVarBool(sm_players_spawn_admin_only) && id == INVALID_ADMIN_ID) {
+			PrintToChat(Client, "[SM] You cannot set your spawn right now.");
+			return Plugin_Handled;
+		}
+
+		if(!IsPlayerAlive(Client)) {
+			PrintToChat(Client, "[SM] You must be alive to set a spawn location.");
+			return Plugin_Handled;
+		}
+
+		GetClientAbsOrigin(Client, SpawnPoint[Client]);
+		GetClientEyeAngles(Client, SpawnAngle[Client]);
+		SpawnSet[Client] = true;
+
+		PrintToChat(Client, "[SM] Spawn location set.");
+	} else {
+		decl bool:isAdmin;
+		
+		if(Client == 0) isAdmin = false; // server cannot invoke this command
+		else isAdmin = IsAdmin(Client);
+		
+		if(!isAdmin) {
+			PrintToChat(Client, "[SM] You do not have access to this command.");
+			return Plugin_Handled;
+		}
+		
+		decl String:TypedName[MAX_NAME_LENGTH];
+		decl String:TestName[MAX_NAME_LENGTH];
+		decl String:TargetName[MAX_NAME_LENGTH];
+		decl String:AdminName[MAX_NAME_LENGTH];
+
+		decl Possibles;
+		Possibles = 0;
+
+		decl Target;
+		Target = -1;
+
+		GetCmdArgString(TypedName, MAX_NAME_LENGTH);
+		StripQuotes(TypedName);
+		TrimString(TypedName);
+
+		for(new Player = 1; Player <= MaxClients; Player++) {
+			if(IsClientInGame(Player)) {
+				GetClientName(Player, TestName, MAX_NAME_LENGTH);
+				if(StrContains(TestName, TypedName, false) != -1) {
+					Target = Player;
+					Possibles += 1;
+				}
+			}
+		}
+		
+		if(Target == -1) {
+			if(Client == 0) {
+				PrintToConsole(Client, "[SM] %s is not ingame.", TypedName);
+			}
+			else {
+				PrintToChat(Client, "[SM] %s is not ingame.", TypedName);
+			}
+			return Plugin_Handled;
+		}
+
+		if(Possibles > 1) {
+			if(Client == 0) {
+				PrintToConsole(Client, "[SM] Multiple targets found.");
+			}
+			else {
+				PrintToChat(Client, "[SM] Multiple targets found.");
+			}
+			return Plugin_Handled;
+		}
+
+		GetClientName(Target, TargetName, MAX_NAME_LENGTH);
+		GetClientName(Client, AdminName, MAX_NAME_LENGTH);
+		
+		GetClientAbsOrigin(Client, SpawnPoint[Target]);
+		GetClientEyeAngles(Client, SpawnAngle[Target]);
+		
+		SpawnSet[Target] = true;
+		
+		PrintToChat(Target, "[SM] Your spawn location was set to the location of %s.", AdminName);
+		PrintToChat(Client, "[SM] You set the spawn location of %s.", TargetName);
 	}
-
-	if(SpawnSetDisabled == true) {
-		PrintToChat(Client, "[SM] You cannot set your spawn right now.");
-		return Plugin_Handled;
-	}
-
-	if(Client == 0) {
-		return Plugin_Handled;
-	}
-
-	new AdminId:id = GetUserAdmin(Client);
-
-	if(GetConVarBool(sm_players_spawn_admin_only) && id == INVALID_ADMIN_ID) {
-		PrintToChat(Client, "[SM] You cannot set your spawn right now.");
-		return Plugin_Handled;
-	}
-
-	if(!IsPlayerAlive(Client)) {
-		PrintToChat(Client, "[SM] You must be alive to set a spawn location.");
-		return Plugin_Handled;
-	}
-
-	GetClientAbsOrigin(Client, SpawnPoint[Client]);
-	GetClientEyeAngles(Client, SpawnAngle[Client]);
-	SpawnSet[Client] = true;
-
-	PrintToChat(Client, "[SM] Spawn location set.");
 
 	return Plugin_Handled;
 }
@@ -113,22 +188,22 @@ public Action:ClearSpawn(Client, Args) {
 		return Plugin_Handled;
 	}
 	else {
-		decl bool:IsAdmin;
+		decl bool:isAdmin;
 
 		if(Client == 0) {
-			IsAdmin = true;
+			isAdmin = true;
 		}
 		else {
 			new AdminId:id = GetUserAdmin(Client);
 			if(id == INVALID_ADMIN_ID) {
-				IsAdmin = false;
+				isAdmin = false;
 			}
 			else {
-				IsAdmin = true;
+				isAdmin = true;
 			}
 		}
 
-		if(!IsAdmin) {
+		if(!isAdmin) {
 			PrintToChat(Client, "[SM] You do not have access to this command.");
 			return Plugin_Handled;
 		}
