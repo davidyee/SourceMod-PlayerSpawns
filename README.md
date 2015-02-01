@@ -20,7 +20,7 @@ https://forums.alliedmods.net/showthread.php?p=877834
 - Counter Strike: Global Offensive
 
 <h2>Cvars:</h2>
-- `sm_player_spawns_version = 1.3.0` (cannot be changed)
+- `sm_player_spawns_version = 1.4.0` (cannot be changed)
 - `sm_player_spawns = 1` - Respawn players to their custom locations on death; 0 - disabled, 1 - enabled
 - `sm_players_spawn_admin_only = 1` - Toggles Admin Only spawn saving; 0 - disabled, 1 - enabled
 
@@ -34,6 +34,9 @@ https://forums.alliedmods.net/showthread.php?p=877834
 - playerspawns.smx into /addons/sourcemod/plugins
 
 <h2>Changelog:</h2>
+- 1.4.0 (2015-02-01)
+  - Add ability to set spawn of players groups via general targets (ie: @all, @ct, @t, @bots, @dead, @alive, etc.)
+  - Add ability to copy a saved spawn point of a player to another player or player group's spawn point via `sm_setspawn <player-to-replace-spawn> <player-to-copy-spawn-from>`
 - 1.3.0 (2015-01-25)
   - Add admin ability to set the spawn location of other players via `sm_setspawn <name>`
 - 1.2.0 (2015-01-24)
